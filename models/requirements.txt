@@ -1,0 +1,11 @@
+boto3==1.36.26
+numpy>=1.20.0
+matplotlib>=3.5.0
+pandas>=1.4.0
+scipy>=1.8.0
+python-dotenv>=1.0.1
+cartopy>=0.23
+xarray>=2025.1.1
+cfgrib>=0.9.15.0
+requests>=2.26.0
+metpy>=1.6.3
