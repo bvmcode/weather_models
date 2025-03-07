@@ -1,6 +1,7 @@
 /airflow/config/
 /airflow/logs/
 /airflow/plugins/
+.DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
