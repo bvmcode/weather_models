@@ -64,9 +64,9 @@ resource "aws_ecs_task_definition" "my_task" {
   cpu                      = "4096"
   memory                   = "8192"
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn  # Grants access to S3
+  task_role_arn            = aws_iam_role.ecs_task_execution_role.arn 
   ephemeral_storage {
-    size_in_gib = 50  # ✅ Increase storage (max 200 GB)
+    size_in_gib = 50
   }
   container_definitions = jsonencode([{
     name      = "my-container"

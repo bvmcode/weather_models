@@ -1,3 +1,11 @@
+terraform {
+  backend "s3" {
+    bucket = "bvm-wx-models-infra"
+    key    = "terraform/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -49,7 +57,9 @@ resource "aws_iam_policy" "s3_rw_policy" {
         ],
         Resource = [
           "arn:aws:s3:::bvm-wx-models",
-          "arn:aws:s3:::bvm-wx-models/*"
+          "arn:aws:s3:::bvm-wx-models/*",
+          "arn:aws:s3:::bvm-wx-models-infra",
+          "arn:aws:s3:::bvm-wx-models-infra/*"
         ]
       }
     ]

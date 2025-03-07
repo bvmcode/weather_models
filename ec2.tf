@@ -1,6 +1,3 @@
-
-
-
 resource "aws_security_group" "ssh_only" {
   name        = "ssh_only"
   description = "Allow SSH and Airflow UI inbound traffic"
@@ -80,7 +77,6 @@ resource "aws_iam_role_policy_attachment" "ecs_execution_attach" {
 }
 
 
-# IAM Role for EC2
 resource "aws_iam_role" "ec2_s3_role" {
   name = "ec2_s3_access_role"
 
@@ -139,14 +135,15 @@ resource "aws_instance" "web" {
             sudo su ubuntu
             sudo groupadd docker
             sudo gpasswd -a $USER docker
-            chown ubuntu:ubuntu /home/ubuntu/airflow/docker-compose.yml
+            chown ubuntu:ubuntu /home/ubuntu/airflow/docker-compose.yaml
+            sudo chmod u=rwx,g=rwx,o=rwx /home/ubuntu/airflow/logs
             cd /home/ubuntu/airflow
             export AIRFLOW_UID=5000
             docker-compose up -d
               EOF
 
   tags = {
-    Name = "Locked-Down-EC2"
+    Name = "Airflow-EC2"
   }
 }
 

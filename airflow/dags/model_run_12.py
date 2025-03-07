@@ -9,12 +9,12 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
-    'retries': 1,
+    'retries': 5,
     'retry_delay': timedelta(minutes=5),
 }
 
 with DAG("model_run_12", default_args=default_args,
-         schedule="30 12 * * *",
+         schedule="45 15 * * *",
          start_date=datetime(2025, 3, 1),
          max_active_runs=1,
          catchup=False
