@@ -24,4 +24,9 @@ run:
 
 local_run: envs run
 
-build_and_push: build auth push
+build_and_push: build auth create_repo push
+
+delete_repo:
+	aws ecr delete-repository --repository-name "weather_models" --region "us-east-1" --force
+
+destroy: auth delete_repo

@@ -1,6 +1,6 @@
 # GFS Weather Models
 
-* Python generated via ECR/ECS
+* Python generated GFS images via ECR/ECS
 * Automated with airflow
  
  * Airflow available locally via port forwarding
