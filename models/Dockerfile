@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM --platform=linux/amd64 python:3.12-slim
 
 # Install dependencies for eccodes, including gfortran
 RUN apt-get update && apt-get install -y \

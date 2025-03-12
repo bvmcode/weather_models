@@ -12,7 +12,7 @@ from .utils import create_directory, write_to_s3
 
 
 
-def generate_height_and_vorticity_image(hour, grib_file, today, model_run):
+def generate_height_and_vorticity_image(hour, grib_file, today, model_run, local_run):
     
     # Open the GRIB2 file
     ds = xr.open_dataset(grib_file, engine="cfgrib", filter_by_keys={'typeOfLevel': 'isobaricInhPa'})
@@ -85,7 +85,8 @@ def generate_height_and_vorticity_image(hour, grib_file, today, model_run):
     cmap = mcolors.LinearSegmentedColormap.from_list("custom_vort", [c[1] for c in cmap_colors], N=512)
     
     # Define color levels for smooth transitions
-    vort_levels = np.linspace(-40, 55, 30)
+    vort_levels = np.linspace(-32, 55, 20)  # Adjust minimum threshold to 5 instead of -40
+
     
     #contour_levels = np.arange(h500_min, h500_max + 60, 60)
     contour_levels = np.arange(h500.min(), h500.max(), 60)
@@ -98,7 +99,7 @@ def generate_height_and_vorticity_image(hour, grib_file, today, model_run):
     
     # Contour fill for vorticity with the fixed colormap
     vort_plot = plt.contourf(lons_sub, lats_sub, vort500_clipped, 
-                            levels=vort_levels, cmap=cmap, extend="both", transform=ccrs.PlateCarree())
+                            levels=vort_levels, cmap=cmap, extend="both", transform=ccrs.PlateCarree(), alpha=.8)
     
     # Add Gridlines
     gl = ax.gridlines(draw_labels=True, linestyle="--", alpha=0.5)
@@ -115,4 +116,5 @@ def generate_height_and_vorticity_image(hour, grib_file, today, model_run):
     create_directory(filepath)
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
-    write_to_s3(filepath, today, model_run, "500mb")
+    if local_run is False:
+        write_to_s3(filepath, today, model_run, "500mb")

@@ -102,13 +102,13 @@ def create_thickness_contours(ax, field, field_smooth, fontsize=8, linestyle="-"
     return contour
 
 
-def create_precip_rate_colormap(ax, field, levels=30):
+def create_precip_rate_colormap(ax, field, levels=25):
     """ Create precipitation shading """
     radar_cmap = plt.get_cmap('gist_ncar', 50)  # Use 'gist_ncar' for smooth shading
     colors = radar_cmap(np.linspace(0, 1, radar_cmap.N))
     colors[0] = [1, 1, 1, 0]  # Transparent for lowest value
     custom_cmap = ListedColormap(colors)
-    levels_rng = np.linspace(field.values.min(), field.values.max(), levels)
+    levels_rng = np.linspace(.0001, field.values.max(), levels)
     contourf = ax.contourf(field.longitude, field.latitude, field.values,alpha=.5,
                            levels=levels_rng, cmap=custom_cmap, transform=ccrs.PlateCarree())
     return contourf
@@ -166,7 +166,7 @@ def add_mslp_systems(ax, lons, lats, data, size, system):
                     horizontalalignment='center', verticalalignment='top', transform=ccrs.PlateCarree())
 
 
-def generate_surface_image(hour, grib_file, today, model_run):
+def generate_surface_image(hour, grib_file, today, model_run, local_run):
     """ Generate MSLP, Thickness, and Precipitation images """
     thickness_1000_500mb, thickness_smooth = get_thickness_data(grib_file)
     mslp, mslp_smooth = get_mslp(grib_file, 1.5)
@@ -193,4 +193,6 @@ def generate_surface_image(hour, grib_file, today, model_run):
     
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
-    write_to_s3(filepath, today, model_run, "sfc")
+
+    if local_run is False:
+        write_to_s3(filepath, today, model_run, "sfc")

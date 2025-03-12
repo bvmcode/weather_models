@@ -1,6 +1,37 @@
 from datetime import datetime, timedelta
 import boto3
 from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
+from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import get_current_context
+from airflow.decorators import task
+
+
+def get_default_args():
+    return {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email_on_failure': False,
+    'retries': 5,
+    'retry_delay': timedelta(minutes=5),
+}
+
+
+def get_config(model_run, execution_date):
+    execution_date_dt = datetime.fromisoformat(str(execution_date))
+    today = execution_date_dt.strftime("%Y-%m-%d")
+    today = "2025-03-10"
+    subnets, security_groups, task_arn = get_cluster_data()
+    return {"model_run": model_run,
+            "today": today,
+            "task_arn": task_arn,
+            "subnets": subnets,
+            "security_groups": security_groups}
+
+
+@task(task_id="config")
+def config(model_run):
+    context = get_current_context()
+    return get_config(model_run, context["execution_date"])
 
 
 def get_hours(start=0):
@@ -63,17 +94,6 @@ def produce_ecs_tasks(config_data, hours):
         return tasks
 
 
-def get_config(model_run, execution_date):
-    execution_date_dt = datetime.fromisoformat(str(execution_date))
-    today = execution_date_dt.strftime("%Y-%m-%d")
-    subnets, security_groups, task_arn = get_cluster_data()
-    return {"model_run": model_run,
-            "today": today,
-            "task_arn": task_arn,
-            "subnets": subnets,
-            "security_groups": security_groups}
-
-
 def run_tasks(hour_range, **kwargs):
     ti = kwargs["ti"]
     config_data = ti.xcom_pull(task_ids="config")
@@ -81,3 +101,17 @@ def run_tasks(hour_range, **kwargs):
     ecs_tasks = produce_ecs_tasks(config_data, hours)
     for ecs_task in ecs_tasks:
         ecs_task.execute(kwargs)
+
+
+def get_all_tasks():
+    ecs_tasks = []
+    for i in range(0,19,3):
+        ecs_tasks.append(
+            PythonOperator(
+                task_id=f"run_ecs_{i}",
+                python_callable=run_tasks,
+                op_kwargs={"hour_range": i},
+                provide_context=True
+            )
+        )
+    return ecs_tasks
