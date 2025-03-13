@@ -18,8 +18,8 @@ def get_default_args():
 
 def get_config(model_run, execution_date):
     execution_date_dt = datetime.fromisoformat(str(execution_date))
-    today = execution_date_dt.strftime("%Y-%m-%d")
-    today = "2025-03-10"
+    today = execution_date_dt.strftime("%Y%m%d")
+    today = "20250312"
     subnets, security_groups, task_arn = get_cluster_data()
     return {"model_run": model_run,
             "today": today,
@@ -77,7 +77,8 @@ def produce_ecs_tasks(config_data, hours):
                             "name": "my-container",
                         "environment": [
                             {"name": "MODEL_RUN", "value": model_run},
-                            {"name": "HOUR", "value": hour}
+                            {"name": "HOUR", "value": hour},
+                            {"name": "MODEL_RUN_DATE", "value": config_data["today"]}
                     ]
                         }
                     ]
