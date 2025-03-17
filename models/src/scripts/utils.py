@@ -20,20 +20,21 @@ def get_file(model_run, date, hour):
     return filepath
 
 
-def write_to_s3(filepath, today, model_run, cat):
+def write_to_s3(filepath, today, model_run, level, plot_type):
     s3_client = boto3.client("s3")
     bucket_name = "bvm-wx-models"
     filename = os.path.basename(filepath)
-    s3_key = f"gfs_images/{today}/{model_run}/{cat}/{filename}"
+    s3_key = f"gfs_images/{today}/{model_run}/{level}/{plot_type}/{filename}"
     s3_client.upload_file(filepath, bucket_name, s3_key)
 
 
-def save_plot(plt, model_run, i, hour, level, plot_type):
+def save_plot(plt, model_run, hour, level, plot_type):
     today = datetime.now().strftime("%Y%m%d")
-    filepath = f"{os.getcwd()}/images/{level}/{plot_type}/{today}/{model_run}/{i}_hour_{hour}.png"
+    filepath = f"{os.getcwd()}/images/{level}/{plot_type}/{today}/{model_run}/{hour}_hour.png"
     create_directory(filepath)
     plt.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close()
+    return filepath
 
 
 def convert_lat_lon(ds):

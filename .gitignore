@@ -1,3 +1,6 @@
+/models/src/data/*
+/models/src/images/*
+
 /airflow/config/
 /airflow/logs/
 /airflow/plugins/

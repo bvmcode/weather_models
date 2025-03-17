@@ -195,4 +195,4 @@ def generate_surface_image(hour, grib_file, today, model_run, local_run):
     plt.close()
 
     if local_run is False:
-        write_to_s3(filepath, today, model_run, "sfc")
+        write_to_s3(filepath, today, model_run, "sfc", "mslp_thickness_precip")

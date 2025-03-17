@@ -19,8 +19,9 @@ run:
 	 -e AWS_DEFAULT_REGION=us-east-1 \
 	 -e AWS_ACCESS_KEY_ID=$(AWS_KEY) \
 	 -e AWS_SECRET_ACCESS_KEY=$(AWS_SECRET_KEY) \
-	 -e HOUR="000" \
 	 -e MODEL_RUN="00" \
+	 -e MODEL_RUN_DATE="20250312"\
+	 -e MODEL_FORECAST_HOUR="000" \
 	 $(AWS_ACCOUNT_ID).dkr.ecr.us-east-1.amazonaws.com/weather_models:latest
 
 build_and_push: build auth create_repo push

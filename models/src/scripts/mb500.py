@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -117,4 +116,4 @@ def generate_height_and_vorticity_image(hour, grib_file, today, model_run, local
     plt.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
     if local_run is False:
-        write_to_s3(filepath, today, model_run, "500mb")
+        write_to_s3(filepath, today, model_run, "500mb", "height_vorticity")
