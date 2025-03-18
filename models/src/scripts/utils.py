@@ -22,7 +22,7 @@ def get_file(model_run, date, hour):
 
 def write_to_s3(filepath, today, model_run, level, plot_type):
     s3_client = boto3.client("s3")
-    bucket_name = "bvm-wx-models"
+    bucket_name = os.getenv("BUCKET_NAME")
     filename = os.path.basename(filepath)
     s3_key = f"gfs_images/{today}/{model_run}/{level}/{plot_type}/{filename}"
     s3_client.upload_file(filepath, bucket_name, s3_key)

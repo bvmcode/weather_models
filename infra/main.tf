@@ -1,6 +1,11 @@
+
+
+variable "BUCKET_MODELS" {
+  type = string
+}
+
 terraform {
   backend "s3" {
-    bucket = "bvm-wx-models-infra"
     key    = "terraform/terraform.tfstate"
     region = "us-east-1"
   }
@@ -56,10 +61,10 @@ resource "aws_iam_policy" "s3_rw_policy" {
           "s3:ListBucket"
         ],
         Resource = [
-          "arn:aws:s3:::bvm-wx-models",
-          "arn:aws:s3:::bvm-wx-models/*",
-          "arn:aws:s3:::bvm-wx-models-infra",
-          "arn:aws:s3:::bvm-wx-models-infra/*"
+          "arn:aws:s3:::${var.BUCKET_MODELS}",
+          "arn:aws:s3:::${var.BUCKET_MODELS}/*",
+          "arn:aws:s3:::${var.BUCKET_MODELS}-infra",
+          "arn:aws:s3:::${var.BUCKET_MODELS}-infra/*"
         ]
       }
     ]

@@ -66,6 +66,7 @@ x-airflow-common:
     AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
     AWS_DEFAULT_REGION: "us-east-1"
     AWS_ACCOUNT_ID: "${AWS_ACCOUNT_ID}"
+    BUCKET_NAME: "${BUCKET_NAME}"
     ECCODES_DEFINITION_PATH: /usr/share/eccodes/definitions
     ECCODES_SAMPLES_PATH: /usr/share/eccodes/samples
     # yamllint disable rule:line-length

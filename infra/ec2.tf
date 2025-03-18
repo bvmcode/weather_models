@@ -122,15 +122,15 @@ resource "aws_instance" "web" {
             mkdir -p /home/ubuntu/airflow/dags
             cd /home/ubuntu/airflow
             apt-get install awscli -y
-            aws s3 cp s3://bvm-wx-models-infra/airflow/docker-compose.yml docker-compose.yaml
-            aws s3 cp s3://bvm-wx-models-infra/airflow/Dockerfile Dockerfile
-            aws s3 cp s3://bvm-wx-models-infra/airflow/requirements.txt requirements.txt
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/test.py ./dags/test.py
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/model_run_00.py ./dags/model_run_00.py
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/model_run_06.py ./dags/model_run_06.py
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/model_run_12.py ./dags/model_run_12.py
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/model_run_18.py ./dags/model_run_18.py
-            aws s3 cp s3://bvm-wx-models-infra/airflow/dags/utils.py ./dags/utils.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/docker-compose.yml docker-compose.yaml
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/Dockerfile Dockerfile
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/requirements.txt requirements.txt
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/test.py ./dags/test.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/model_run_00.py ./dags/model_run_00.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/model_run_06.py ./dags/model_run_06.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/model_run_12.py ./dags/model_run_12.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/model_run_18.py ./dags/model_run_18.py
+            aws s3 cp s3://${var.BUCKET_MODELS}-infra/airflow/dags/utils.py ./dags/utils.py
             chmod 666 /var/run/docker.sock
             sudo su ubuntu
             sudo groupadd docker
@@ -139,6 +139,7 @@ resource "aws_instance" "web" {
             sudo chmod u=rwx,g=rwx,o=rwx /home/ubuntu/airflow/logs
             cd /home/ubuntu/airflow
             export AIRFLOW_UID=5000
+            export BUCKET_NAME=${var.BUCKET_MODELS}
             docker-compose up -d
               EOF
 

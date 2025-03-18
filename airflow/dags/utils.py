@@ -1,6 +1,9 @@
+import logging
+import os
 from datetime import datetime, timedelta
 import boto3
 from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
+from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
@@ -19,14 +22,24 @@ def get_default_args():
 @task(task_id="config")
 def config(model_run):
     context = get_current_context()
-    execution_date_dt = datetime.fromisoformat(str(context["execution_date"]))
-    today = execution_date_dt.strftime("%Y%m%d")
+    try:
+        today = Variable.get("execution_date")
+        if today is None:
+            raise ValueError("Execution date not found")
+    except:
+        execution_date_dt = datetime.fromisoformat(str(context["execution_date"]))
+        today = execution_date_dt.strftime("%Y%m%d")
+    bucket_name = os.getenv("BUCKET_NAME")
+    logging.info(f"Bucket name: {bucket_name}")
     subnets, security_groups, task_arn = get_cluster_data()
-    return {"model_run": model_run,
+    config_data = {"model_run": model_run,
             "today": today,
             "task_arn": task_arn,
             "subnets": subnets,
-            "security_groups": security_groups}
+            "security_groups": security_groups,
+            "bucket_name": bucket_name}
+    logging.info(config_data)
+    return config_data
 
 
 def get_hours(start=0):
@@ -73,7 +86,8 @@ def produce_ecs_tasks(config_data, hours):
                         "environment": [
                             {"name": "MODEL_RUN", "value": model_run},
                             {"name": "MODEL_RUN_DATE", "value": config_data["today"]},
-                            {"name": "MODEL_FORECAST_HOUR", "value": hour}
+                            {"name": "MODEL_FORECAST_HOUR", "value": hour},
+                            {"name": "BUCKET_NAME", "value": config_data["bucket_name"]},
                     ]
                         }
                     ]
