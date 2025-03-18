@@ -1,6 +1,7 @@
 # GFS Weather Models
 
-Python generated GFS images using Airflow on an AWS EC2 and task orchestration with AWS ECS.
+Python generated GFS images using Airflow (on AWS EC2) orchestration of ECS tasks on a Fargate cluster. 
+Model images are updated four times per day.
 
 * create wxmodels ssh key locally
 
