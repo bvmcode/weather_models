@@ -1,11 +1,11 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import boto3
 from airflow.providers.amazon.aws.operators.ecs import EcsRunTaskOperator
 from airflow.models import Variable
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.python import get_current_context
+# from airflow.operators.python import get_current_context
 from airflow.decorators import task
 
 
@@ -21,13 +21,14 @@ def get_default_args():
 
 @task(task_id="config")
 def config(model_run):
-    context = get_current_context()
+    #context = get_current_context()
     try:
         today = Variable.get("execution_date")
         if today is None:
             raise ValueError("Execution date not found")
     except:
-        execution_date_dt = datetime.fromisoformat(str(context["execution_date"]))
+        #execution_date_dt = datetime.fromisoformat(str(context["execution_date"]))
+        execution_date_dt = datetime.now(timezone.utc)
         today = execution_date_dt.strftime("%Y%m%d")
     bucket_name = os.getenv("BUCKET_NAME")
     logging.info(f"Bucket name: {bucket_name}")

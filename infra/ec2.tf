@@ -108,7 +108,7 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
 
 resource "aws_instance" "web" {
   ami                    = "ami-0e1bed4f06a3b463d"
-  instance_type          = "m5.2xlarge"
+  instance_type          = "t3.xlarge"
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.ssh_only.id]
   key_name               = aws_key_pair.deployer.key_name
