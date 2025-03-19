@@ -30,15 +30,15 @@ def generate_dew_point_image(hour, grib_file, today, model_run, local_run):
         drop=True
     )
 
-    # ✅ Compute Dew Point Temperature Since 'd' is Missing
+    # Compute Dew Point Temperature Since 'd' is Missing
     T = ds_850["t"]  # Temperature (K)
     q = ds_850["q"]  # Specific Humidity (kg/kg)
 
-    # ✅ Compute Vapor Pressure (hPa)
+    # Compute Vapor Pressure (hPa)
     P = 850  # 850 mb pressure level in hPa
     e = (q * P) / (0.622 + q)
 
-    # ✅ Compute Dew Point (Celsius)
+    # Compute Dew Point (Celsius)
     dpt850 = (243.5 * (np.log(e) - np.log(6.112))) / (17.67 - (np.log(e) - np.log(6.112)))
 
     # Convert Winds to Knots
@@ -74,7 +74,7 @@ def generate_dew_point_image(hour, grib_file, today, model_run, local_run):
     lats = dpt850.latitude.values
     dpt850_sub = dpt850.values  # Convert to NumPy array
 
-    # ✅ Define Colormap for Dew Point (blue/green for moisture)
+    # Define Colormap for Dew Point (blue/green for moisture)
     cmap_dpt = mcolors.LinearSegmentedColormap.from_list("dpt_cmap", [
         (0.0, "#8B4513"),   # Dry (Brown) - Lowest
         (0.3, "#A9A9A9"),   # Mid-range (Gray)
@@ -87,19 +87,19 @@ def generate_dew_point_image(hour, grib_file, today, model_run, local_run):
     dpt_levels = np.linspace(-30, 25, 50)  # 50 levels for smooth shading
     dpt_plot = ax.contourf(lons, lats, dpt850_sub, levels=dpt_levels, cmap=cmap_dpt, extend="both", transform=ccrs.PlateCarree())
 
-    # ✅ Reduce Wind Barb Density (Interpolation Method)
+    # Reduce Wind Barb Density (Interpolation Method)
     barb_density = 0.15  # ✅ Same density as RH version
     interp_u = zoom(u850.values, barb_density)
     interp_v = zoom(v850.values, barb_density)
     interp_lons = zoom(lons, barb_density)
     interp_lats = zoom(lats, barb_density)
 
-    # ✅ Remove Very Weak Winds (<5 knots) to Avoid Circles
+    # Remove Very Weak Winds (<5 knots) to Avoid Circles
     mask = np.sqrt(interp_u**2 + interp_v**2) > 5  # ✅ Wind speeds in knots
     interp_u = np.where(mask, interp_u, np.nan)
     interp_v = np.where(mask, interp_v, np.nan)
 
-    # ✅ Wind Barbs
+    # Wind Barbs
     ax.barbs(interp_lons, interp_lats, interp_u, interp_v, 
                 length=5, linewidth=0.7, color="black", transform=ccrs.PlateCarree())  # ✅ Smaller barbs
 
