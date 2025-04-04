@@ -14,7 +14,7 @@ ssh-keygen -f wxmodels
 
 ```
 cd infra
-TF_VAR_BUCKET_MODELS=<some_value>
+export TF_VAR_BUCKET_MODELS=<some_value>
 ```
 
 * Create resources (takes awhile). Your bucket is used for storing GFS images and `your-bucket-infra` is used by terraform to move the airflow files from local to the EC2. This will build the docker solution in `../models` and push to ECR. It was also create a Fargat cluster, service and task definition. And lastly it will create an Airflow instance on an EC2 with the dags shown in `../airflow.dags`.
