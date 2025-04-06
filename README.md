@@ -31,6 +31,8 @@ terraform apply -auto-approve
  ssh -i ~/.ssh/wxmodels -L 8080:localhost:8080 -N ubuntu@<ip_addr_of_ec2>
  ```
 
+ * Browse to the UI and put the dags on so that model runs start populating to S3 on schedule.
+
  * To destroy resources
 
  ```
