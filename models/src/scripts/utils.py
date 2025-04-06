@@ -11,6 +11,10 @@ import pandas as pd
 import numpy as np
 from scipy.ndimage import zoom
 from matplotlib.colors import LinearSegmentedColormap, Normalize
+import matplotlib.lines as mlines
+from matplotlib.colors import ListedColormap
+import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter, maximum_filter, minimum_filter
 
 
 def create_directory(filepath):
@@ -29,6 +33,14 @@ def get_file(model_run, date, hour):
     return filepath
 
 
+def get_dataset(grib_file, filter_by_keys={"typeOfLevel":"isobaricInhPa"}):
+    ds = xr.open_dataset(grib_file, engine="cfgrib", filter_by_keys=filter_by_keys)
+    if ds.longitude.max() > 180:
+        ds = ds.assign_coords(longitude=((ds.longitude + 180) % 360 - 180))
+        ds = ds.sortby("longitude")
+    return ds
+
+
 def write_to_s3(filepath, today, model_run, level, plot_type):
     s3_client = boto3.client("s3")
     bucket_name = os.getenv("BUCKET_NAME")
@@ -44,28 +56,6 @@ def save_plot(plt, model_run, hour, level, plot_type):
     plt.savefig(filepath, dpi=200, bbox_inches="tight")
     plt.close()
     return filepath
-
-
-def convert_lat_lon(ds):
-    # Convert longitudes from 0-360 to -180 to 180 if needed
-    if ds.longitude.max() > 180:
-        ds = ds.assign_coords(longitude=((ds.longitude + 180) % 360 - 180))
-        ds = ds.sortby("longitude")
-    return ds
-
-
-def filter_ds(ds, level, extent):
-    ds = ds.sel(isobaricInhPa=level)
-    return ds.where((ds.latitude >= extent[2]) & (ds.latitude <= extent[3]) &
-                    (ds.longitude >= extent[0]) & (ds.longitude <= extent[1]), drop=True)
-
-
-def get_dataset(grib_file):
-    ds = xr.open_dataset(grib_file, engine="cfgrib", filter_by_keys={"typeOfLevel":"isobaricInhPa"})
-    if ds.longitude.max() > 180:
-        ds = ds.assign_coords(longitude=((ds.longitude + 180) % 360 - 180))
-        ds = ds.sortby("longitude")
-    return ds
 
 
 def get_filtered_data(ds, level, field, lat_rng, lon_rng, multiplier=1):
@@ -96,10 +86,12 @@ def get_plot(lat_rng, lon_rng):
     ax.add_feature(cfeature.STATES, ls="--")
     return fig, ax
 
+
 def get_lat_lons(field):
     lons = field.longitude.values
     lats = field.latitude.values
     return lats, lons
+
 
 def vorticity_plot(vort, lats, lons, ax):
     vort = np.clip(vort, -5, 55)
@@ -138,7 +130,6 @@ def vorticity_plot(vort, lats, lons, ax):
     cbar = plt.colorbar(vort_plot, orientation="horizontal", pad=0.05, aspect=50)
     cbar.set_label("Absolute Vorticity (10⁻⁵ s⁻¹)")
 
-
     
 def height_plot(gh, lats, lons, ax):
     #contour_levels = np.arange(h500_min, h500_max + 60, 60)
@@ -163,6 +154,7 @@ def write_model_image(today, model_run, hour, local_run, level, plot_type):
     if local_run is False:
         write_to_s3(filepath, today, model_run, level, plot_type)
 
+
 def plot_title(ds, desc):
     run_time = pd.to_datetime(str(ds.time.values)).strftime('%Y-%m-%d: %HZ')# Model initialization time
     forecast_hour = ds.step.values.astype('timedelta64[h]').astype(int)  # Convert to hours
@@ -185,6 +177,7 @@ def plot_wind_barbs(u, v, lats, lons, ax):
 
     ax.barbs(interp_lons, interp_lats, interp_u, interp_v, 
                 length=5, linewidth=0.7, color="black", transform=ccrs.PlateCarree())
+
 
 def plot_dew_point(level, dpt, lons, lats, ax):
     # Define Colormap for Dew Point (blue/green for moisture)
@@ -262,3 +255,99 @@ def plot_wind_contours(u, v, lats, lons, ax):
     # Add color bar
     cbar = plt.colorbar(wind_plot, orientation="horizontal", pad=0.05, aspect=50, alpha=.5)
     cbar.set_label("Wind Speed (kt)")
+
+
+def get_thickness_data(file_path, lat_rng, lon_rng):
+    ds = get_dataset(file_path)
+    geopotential_1000mb = get_filtered_data(ds, 1000, 'gh', lat_rng, lon_rng)
+    geopotential_500mb = get_filtered_data(ds, 500, 'gh', lat_rng, lon_rng)
+    thickness = geopotential_500mb - geopotential_1000mb
+    return thickness
+    
+
+def get_mslp(file_path, lat_rng, lon_rng):
+    ds = get_dataset(file_path, {"shortName": "prmsl"})
+    ds_mslp = ds.sel(latitude=slice(lat_rng[1], lat_rng[0]), longitude=slice(lon_rng[0], lon_rng[1]))
+    mslp = ds_mslp['prmsl'] / 100
+    return mslp[::2, ::2]
+    
+
+def get_precip_rate(file_path, lat_rng, lon_rng):
+    ds = get_dataset(file_path, {"shortName": "prate", "stepType": "instant"})
+    data = ds['prate']
+    data = data.sel(latitude=slice(lat_rng[1], lon_rng[0]), longitude=slice(lon_rng[0], lon_rng[1]))
+    return data[::2, ::2]
+
+
+def create_mslp_contours(ax, mslp):
+    """ Create contours with proper spacing """
+    smoothed = gaussian_filter(mslp, sigma=1.5)
+    contour_interval=6
+    contour_levels = np.arange(mslp.min(), mslp.max(), contour_interval)
+    contour = ax.contour(mslp.longitude, mslp.latitude, smoothed,
+                         levels=contour_levels, colors="black", linewidths=1, linestyles="-",
+                         transform=ccrs.PlateCarree())
+    ax.clabel(contour, fmt='%d', colors="black", fontsize=8)
+
+
+def create_thickness_contours(ax, thickness):
+    """ Create contours with different colors for specific values (e.g., 540 dm in blue) """
+    smoothed = gaussian_filter(thickness, sigma=1.5)
+    contour_levels = np.arange(thickness.min(), thickness.max(), 60)
+    # Define a color mapping function
+    def get_color(level):
+        return "blue" if level <= 5400 else "red"
+
+    # Plot each contour level separately
+    for level in contour_levels:
+        contour = ax.contour(thickness.longitude, thickness.latitude, smoothed,
+                             levels=[level], colors=get_color(level),
+                             linewidths=1, linestyles="dashed",
+                             transform=ccrs.PlateCarree())
+        ax.clabel(contour, fmt='%d', colors=get_color(level), fontsize=8)
+
+
+def add_mslp_systems(ax, mslp, lats, lons, lat_rng, lon_rng):
+    """ Adds Highs (H) and Lows (L) to the plot without placing them too close to the edges. """
+    # mslp = gaussian_filter(mslp, sigma=.8)
+    
+    system_data = {
+        "H": {"data_ext": maximum_filter(mslp, 40, mode='nearest'), "color": "b"},
+        "L": {"data_ext": minimum_filter(mslp, 50, mode='nearest'), "color": "r"}
+    }
+
+    for system in system_data:
+        data_ext = system_data[system]["data_ext"]
+        color = system_data[system]["color"]
+        mxy, mxx = np.where(data_ext == mslp)
+
+        # Define boundary limits for placing labels (avoid edges)
+        lon_min, lon_max = lon_rng[0] + 2, lon_rng[1] - 2  # Adjust these values if needed
+        lat_min, lat_max = lat_rng[0] + 2, lat_rng[1] - 2
+
+        for i in range(len(mxy)):    
+            lon_value = lons[mxx[i]]
+            lat_value = lats[mxy[i]]
+
+            # Ensure labels are placed within safe bounds
+            if lon_min <= lon_value <= lon_max and lat_min <= lat_value <= lat_max:
+                ax.text(lon_value, lat_value, system, color=color, size=24,
+                        clip_on=True, horizontalalignment='center', verticalalignment='center',
+                        transform=ccrs.PlateCarree())
+                ax.text(lon_value, lat_value,
+                        '\n' + str(np.int64(mslp[mxy[i], mxx[i]])),
+                        color=color, size=12, clip_on=True, fontweight='bold',
+                        horizontalalignment='center', verticalalignment='top', transform=ccrs.PlateCarree())
+
+
+def create_precip_rate_colormap(ax, precip_rate):
+    """ Create precipitation shading """
+    radar_cmap = plt.get_cmap('gist_ncar', 50)  # Use 'gist_ncar' for smooth shading
+    colors = radar_cmap(np.linspace(0, 1, radar_cmap.N))
+    colors[0] = [1, 1, 1, 0]  # Transparent for lowest value
+    custom_cmap = ListedColormap(colors)
+    levels_rng = np.linspace(.0001, precip_rate.values.max(), 25)
+    contourf = ax.contourf(precip_rate.longitude, precip_rate.latitude, precip_rate.values,alpha=.5,
+                           levels=levels_rng, cmap=custom_cmap, transform=ccrs.PlateCarree())
+    cbar = plt.colorbar(contourf,  orientation='horizontal', pad=0.05, aspect=50)
+    cbar.set_label("Precipitation Rate (mm/hr)", fontsize=12)
