@@ -1,20 +1,19 @@
 import os
 from datetime import datetime
 import requests
+
 import boto3
-import xarray as xr
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colors import ListedColormap
 import pandas as pd
 import numpy as np
 from scipy.ndimage import zoom
-from matplotlib.colors import LinearSegmentedColormap, Normalize
-import matplotlib.lines as mlines
-from matplotlib.colors import ListedColormap
-import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter, maximum_filter, minimum_filter
+import xarray as xr
 
 
 def create_directory(filepath):
